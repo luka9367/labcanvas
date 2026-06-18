@@ -37,7 +37,6 @@ export default function EditorPage() {
     setAbortController,
     generationMode,
     setGenerationMode,
-    refreshProjects,
   } = useApp()
 
   const [prompt, setPrompt] = useState('')
@@ -339,59 +338,111 @@ export default function EditorPage() {
     }
   }
 
-  const handleSave = async () => {
-    try {
-      const xml = editorRef.current?.getXml?.() || generatedXml
-      if (!xml) return
+  const downloadFile = (dataUrlOrBlob: string | Blob, filename: string) => {
+    const url = typeof dataUrlOrBlob === 'string' ? dataUrlOrBlob : URL.createObjectURL(dataUrlOrBlob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    a.style.display = 'none'
+    document.body.appendChild(a)
+    a.click()
+    setTimeout(() => {
+      document.body.removeChild(a)
+      if (typeof dataUrlOrBlob !== 'string') {
+        URL.revokeObjectURL(url)
+      }
+    }, 100)
+  }
 
-      if (projectId) {
-        await projectsApi.update(projectId, {
-          name: projectName,
-          diagram_data: { xml }
-        })
-      } else {
-        const response = await projectsApi.create({
-          name: projectName,
-          description: prompt
-        })
-        if (response.success && response.project) {
-          await projectsApi.update(response.project.id, {
-            diagram_data: { xml }
-          })
-          navigate(`/editor/${response.project.id}`)
+  const exportFromDrawio = (format: 'png' | 'svg'): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      if (!editorRef.current?.contentWindow) {
+        reject(new Error('编辑器未加载'))
+        return
+      }
+
+      const handleMessage = (event: MessageEvent) => {
+        if (event.data && typeof event.data === 'string') {
+          try {
+            const msg = JSON.parse(event.data)
+            if (msg.event === 'export') {
+              window.removeEventListener('message', handleMessage)
+              if (msg.data) {
+                resolve(msg.data)
+              } else {
+                reject(new Error('导出数据为空'))
+              }
+            }
+          } catch {
+            // Ignore non-JSON messages
+          }
         }
       }
-      
-      refreshProjects()
-      alert('保存成功！')
+
+      window.addEventListener('message', handleMessage)
+
+      try {
+        editorRef.current.contentWindow.postMessage(
+          JSON.stringify({
+            action: 'export',
+            format,
+            border: 10,
+            crop: true,
+            shadow: true,
+          }),
+          '*'
+        )
+      } catch (e) {
+        window.removeEventListener('message', handleMessage)
+        reject(e)
+      }
+
+      setTimeout(() => {
+        window.removeEventListener('message', handleMessage)
+        reject(new Error('导出超时'))
+      }, 15000)
+    })
+  }
+
+  const handleSave = async () => {
+    // 优先保存生成的图片到本地相册/下载目录
+    if (generatedImage) {
+      downloadFile(generatedImage, `${projectName}.png`)
+      return
+    }
+
+    // 如果没有图片，尝试从 draw.io 导出 PNG
+    try {
+      const dataUrl = await exportFromDrawio('png')
+      downloadFile(dataUrl, `${projectName}.png`)
     } catch (error) {
-      alert('保存失败：' + (error instanceof Error ? error.message : '未知错误'))
+      alert('保存失败：' + (error instanceof Error ? error.message : '编辑器未就绪，请等待加载完成'))
     }
   }
 
-  const handleExport = (format: 'png' | 'svg' | 'xml') => {
-    if (!editorRef.current) return
-    
-    const xml = editorRef.current.getXml?.()
-    if (!xml) return
+  const handleExport = async (format: 'png' | 'svg' | 'xml') => {
+    const xml = editorRef.current?.getXml?.() || generatedXml
+    if (!xml) {
+      alert('暂无内容可导出')
+      return
+    }
 
     if (format === 'xml') {
       const blob = new Blob([xml], { type: 'application/xml' })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `${projectName}.drawio`
-      a.click()
-      URL.revokeObjectURL(url)
-    } else {
-      // For PNG/SVG, we would need to use draw.io's export API
-      // This is a simplified version
-      alert('导出功能需要通过 draw.io 编辑器完成')
+      downloadFile(blob, `${projectName}.drawio`)
+      return
+    }
+
+    try {
+      const dataUrl = await exportFromDrawio(format)
+      downloadFile(dataUrl, `${projectName}.${format}`)
+    } catch (error) {
+      alert('导出失败：' + (error instanceof Error ? error.message : '编辑器未就绪，请等待加载完成'))
     }
   }
 
   return (
-    <div className="flex flex-col md:flex-row h-full md:overflow-hidden overflow-y-auto">
+    <div className="flex flex-col md:flex-row md:h-full min-h-full">
       {/* Input panel: mobile scrollable, desktop left sidebar */}
       <div className="md:h-full md:w-80 lg:w-96 bg-white border-b md:border-b-0 md:border-r border-gray-200 flex flex-col shrink-0">
         {/* Header */}
@@ -578,7 +629,7 @@ export default function EditorPage() {
       </div>
 
       {/* Canvas area: mobile fixed height, desktop right side */}
-      <div className="h-[50vh] md:h-full md:flex-1 flex flex-col bg-gray-100 min-h-0 overflow-hidden">
+      <div className="h-[60vh] md:h-full md:flex-1 flex flex-col bg-gray-100 min-h-0">
         {/* Toolbar */}
         <div className="h-12 bg-white border-b border-gray-200 flex items-center justify-between px-3 md:px-4 shrink-0">
           <div className="flex items-center gap-2">

@@ -34,6 +34,13 @@ export default function Layout() {
     }
   }, [location.pathname, setSidebarOpen])
 
+  // Close sidebar when version modal opens
+  useEffect(() => {
+    if (versionModalOpen) {
+      setSidebarOpen(false)
+    }
+  }, [versionModalOpen, setSidebarOpen])
+
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
       <VersionUpdateModal isOpen={versionModalOpen} onClose={() => setVersionModalOpen(false)} />
