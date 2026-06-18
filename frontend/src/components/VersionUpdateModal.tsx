@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { X, Zap, Sparkles, Images, ListChecks, Globe, User, Layers } from 'lucide-react'
+import { X, Zap, Sparkles, Images, ListChecks, Globe, User, Layers, Smartphone, Shield } from 'lucide-react'
 
 interface VersionUpdateModalProps {
   isOpen: boolean
@@ -7,10 +7,34 @@ interface VersionUpdateModalProps {
 }
 
 const VERSION_DATA = {
-  version: 'v1.2.0',
+  version: 'v1.2.1',
   date: '2026年6月18日',
   author: '范嘉许',
   updates: [
+    {
+      icon: Smartphone,
+      title: '移动端全面适配优化',
+      desc: '针对手机端重新设计全局布局：侧边栏改为抽屉式抽屉导航并添加遮罩层；创作页改为整页上下滚动布局，输入面板自然展开、画布置于下方，彻底解决可视区域被严重压缩的问题；首页、素材库、设置页全面适配小屏间距与字体。',
+      highlight: '手机端可用性大幅提升',
+    },
+    {
+      icon: Globe,
+      title: '一键分享与部署优化',
+      desc: '后端直接托管前端静态文件，配合 cpolar 内网穿透实现"一个链接即可访问"。优化本地启动脚本与网关配置，朋友无需安装任何软件，浏览器打开链接就能使用完整功能。',
+      highlight: '一个链接，开箱即用',
+    },
+    {
+      icon: Shield,
+      title: '设置页 API Key 显示修复',
+      desc: '修复手机上 API 密钥因密码输入框显示异常导致的"空白"问题。隐藏状态下通过占位符清晰展示已保存的 masked key，点击显示后可见完整密钥，支持一键复制与清除。',
+      highlight: '密钥状态一目了然',
+    },
+    {
+      icon: Images,
+      title: '素材库图片加载修复',
+      desc: '修复后端静态文件挂载路径变化导致素材库 256 张参考图片无法加载的问题。同时支持 /static 与 / 双重挂载，确保图片、前端页面与 API 接口全部正常访问。',
+      highlight: '256张素材正常加载',
+    },
     {
       icon: Layers,
       title: '系统性图像生成效果架构优化',
@@ -54,6 +78,14 @@ const VERSION_DATA = {
     {
       title: '智能迭代不费心',
       desc: '用户无需手动调试提示词，引擎自动识别画质缺陷并生成针对性优化方向，最多2轮迭代即可将 mediocre 输出提升为 publication-ready 级别的学术插图。',
+    },
+    {
+      title: '移动端友好',
+      desc: '专为手机重新设计的交互布局，创作页支持整页自然滚动，侧边栏改为抽屉式，设置页与素材库全面适配小屏。随时随地都能用手机创作学术插图。',
+    },
+    {
+      title: '一键分享',
+      desc: '本地部署 + cpolar 内网穿透，只需一个浏览器链接就能邀请朋友使用。无需服务器、无需域名、无需复杂配置，打开即用的轻量级共享方案。',
     },
     {
       title: '全流程可感知',
