@@ -80,9 +80,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [generationProgress, setGenerationProgress] = useState('')
   const [generationSteps, setGenerationSteps] = useState<GenerationStep[]>([])
   const [abortController, setAbortController] = useState<AbortController | null>(null)
-  const [sidebarOpen, setSidebarOpenState] = useState<boolean>(() => 
-    storage.get(STORAGE_KEYS.SIDEBAR_OPEN, true)
-  )
+  const [sidebarOpen, setSidebarOpenState] = useState<boolean>(() => {
+    const stored = storage.get(STORAGE_KEYS.SIDEBAR_OPEN, null)
+    if (stored !== null) return stored
+    // Default closed on small screens
+    return typeof window !== 'undefined' ? window.innerWidth >= 768 : true
+  })
   const [activePanel, setActivePanel] = useState<string | null>(null)
   const [generationMode, setGenerationModeState] = useState<GenerationMode>(() => 
     storage.get(STORAGE_KEYS.GENERATION_MODE, 'auto')

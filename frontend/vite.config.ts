@@ -14,16 +14,14 @@ export default defineConfig({
     port: 3001,
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        target: 'http://localhost:8080',
         changeOrigin: true,
       },
       '/static': {
-        target: 'http://localhost:8000',
+        target: 'http://localhost:8080',
         changeOrigin: true,
       },
     },
-    // Support for React Router - fallback to index.html for all routes
-    historyApiFallback: true,
   },
   build: {
     outDir: 'dist',

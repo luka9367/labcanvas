@@ -199,23 +199,23 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">设置</h1>
-        <p className="text-gray-600">配置 API 密钥和模型参数</p>
+    <div className="p-4 md:p-6 max-w-4xl mx-auto">
+      <div className="mb-4 md:mb-6">
+        <h1 className="text-xl md:text-2xl font-bold text-gray-900">设置</h1>
+        <p className="text-sm md:text-base text-gray-600">配置 API 密钥和模型参数</p>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-4 md:space-y-6">
         {/* API Keys Section */}
-        <div className="card p-6">
-          <div className="flex items-center justify-between mb-4">
+        <div className="card p-4 md:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
             <div className="flex items-center gap-2">
               <Key className="w-5 h-5 text-primary-600" />
-              <h2 className="text-lg font-semibold">API 密钥</h2>
+              <h2 className="text-base md:text-lg font-semibold">API 密钥</h2>
             </div>
             <button
               onClick={handleClearAllKeys}
-              className="flex items-center gap-2 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              className="flex items-center justify-center gap-2 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
             >
               <LogOut className="w-4 h-4" />
               退出登录 / 清除所有密钥
@@ -340,10 +340,10 @@ export default function SettingsPage() {
         </div>
 
         {/* Model Settings */}
-        <div className="card p-6">
+        <div className="card p-4 md:p-6">
           <div className="flex items-center gap-2 mb-4">
             <Bot className="w-5 h-5 text-primary-600" />
-            <h2 className="text-lg font-semibold">模型设置</h2>
+            <h2 className="text-base md:text-lg font-semibold">模型设置</h2>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -407,10 +407,10 @@ export default function SettingsPage() {
         </div>
 
         {/* Advanced Settings */}
-        <div className="card p-6">
+        <div className="card p-4 md:p-6">
           <div className="flex items-center gap-2 mb-4">
             <Database className="w-5 h-5 text-primary-600" />
-            <h2 className="text-lg font-semibold">高级设置</h2>
+            <h2 className="text-base md:text-lg font-semibold">高级设置</h2>
           </div>
           
           <div className="space-y-4">
@@ -489,14 +489,14 @@ export default function SettingsPage() {
         </div>
 
         {/* Save Button */}
-        <div className="flex items-center justify-end gap-4">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
           {saved && (
-            <span className="text-green-600 text-sm">保存成功！</span>
+            <span className="text-green-600 text-sm text-center sm:text-right">保存成功！</span>
           )}
           <button
             onClick={handleSave}
             disabled={loading}
-            className="btn-primary flex items-center gap-2"
+            className="btn-primary flex items-center justify-center gap-2"
           >
             {loading ? (
               <>

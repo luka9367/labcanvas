@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation } from 'react-router-dom'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { 
   Home, 
   Settings, 
@@ -27,15 +27,32 @@ export default function Layout() {
     { path: '/settings', icon: Settings, label: '设置' },
   ]
 
+  // Close sidebar when navigating on mobile
+  useEffect(() => {
+    if (window.innerWidth < 768) {
+      setSidebarOpen(false)
+    }
+  }, [location.pathname, setSidebarOpen])
+
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
       <VersionUpdateModal isOpen={versionModalOpen} onClose={() => setVersionModalOpen(false)} />
+
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/40 z-40 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
 
       {/* Sidebar */}
       <aside
         className={`${
-          sidebarOpen ? 'w-64' : 'w-0'
-        } bg-white border-r border-gray-200 flex flex-col transition-all duration-300 overflow-hidden`}
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        } fixed md:static inset-y-0 left-0 w-64 bg-white border-r border-gray-200 flex flex-col transition-transform duration-300 z-50 md:translate-x-0 ${
+          sidebarOpen ? 'md:w-64' : 'md:w-0 md:overflow-hidden'
+        }`}
       >
         {/* Logo */}
         <div className="p-4 border-b border-gray-200">
@@ -57,7 +74,8 @@ export default function Layout() {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`sidebar-item ${isActive ? 'active' : ''}`}
+                onClick={() => window.innerWidth < 768 && setSidebarOpen(false)}
+                className={`sidebar-item ${isActive ? 'active' : ''} md:text-sm`}
               >
                 <Icon className="w-5 h-5" />
                 <span>{item.label}</span>
@@ -95,19 +113,19 @@ export default function Layout() {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 flex flex-col overflow-hidden">
+      <main className="flex-1 flex flex-col overflow-hidden min-w-0">
         {/* Header */}
-        <header className="h-14 bg-white border-b border-gray-200 flex items-center px-4">
+        <header className="h-14 bg-white border-b border-gray-200 flex items-center px-3 md:px-4 shrink-0">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 -ml-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
             {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
           
-          <div className="ml-4 flex items-center gap-2 text-gray-600">
-            <FolderOpen className="w-4 h-4" />
-            <span className="text-sm">
+          <div className="ml-3 md:ml-4 flex items-center gap-2 text-gray-600 min-w-0">
+            <FolderOpen className="w-4 h-4 shrink-0" />
+            <span className="text-sm truncate">
               {location.pathname === '/' ? '首页' : 
                location.pathname.startsWith('/editor') ? '编辑器' :
                location.pathname === '/gallery' ? '素材库' :
@@ -117,7 +135,7 @@ export default function Layout() {
         </header>
 
         {/* Page content */}
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-auto min-w-0">
           <Outlet />
         </div>
       </main>

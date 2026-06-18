@@ -15,6 +15,8 @@ import {
   XCircle,
   Circle,
   Ban,
+  PenSquare,
+  Monitor,
 } from 'lucide-react'
 import { generateApi, projectsApi } from '../services/api'
 import { useApp } from '../contexts/AppContext'
@@ -46,6 +48,7 @@ export default function EditorPage() {
   const [generatedImage, setGeneratedImage] = useState<string | null>(null)
   const [projectName, setProjectName] = useState('未命名项目')
   const [isGalleryOpen, setIsGalleryOpen] = useState(false)
+  const [showInputPanel, setShowInputPanel] = useState(true)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const editorRef = useRef<any>(null)
 
@@ -391,22 +394,26 @@ export default function EditorPage() {
   }
 
   return (
-    <div className="flex h-full">
+    <div className="flex flex-col md:flex-row h-[calc(100%-48px)] md:h-full relative">
       {/* Left sidebar - Input panel */}
-      <div className="w-96 bg-white border-r border-gray-200 flex flex-col">
+      <div className={`
+        bg-white border-r border-gray-200 flex flex-col
+        ${showInputPanel ? 'flex' : 'hidden md:flex'}
+        w-full md:w-80 lg:w-96 h-[55%] md:h-full shrink-0 z-10
+      `}>
         {/* Header */}
-        <div className="p-4 border-b border-gray-200">
+        <div className="p-3 md:p-4 border-b border-gray-200">
           <input
             type="text"
             value={projectName}
             onChange={(e) => setProjectName(e.target.value)}
-            className="text-lg font-semibold text-gray-900 bg-transparent border-none focus:outline-none focus:ring-0 w-full"
+            className="text-base md:text-lg font-semibold text-gray-900 bg-transparent border-none focus:outline-none focus:ring-0 w-full"
             placeholder="项目名称"
           />
         </div>
 
         {/* Mode selector */}
-        <div className="p-4 border-b border-gray-200">
+        <div className="p-3 md:p-4 border-b border-gray-200">
           <label className="text-sm font-medium text-gray-700 mb-2 block">
             生成模式
           </label>
@@ -417,7 +424,7 @@ export default function EditorPage() {
                 <button
                   key={mode.id}
                   onClick={() => setGenerationMode(mode.id)}
-                  className={`p-3 rounded-lg border text-left transition-colors ${
+                  className={`p-2.5 md:p-3 rounded-lg border text-left transition-colors ${
                     generationMode === mode.id
                       ? 'border-primary-500 bg-primary-50 text-primary-700'
                       : 'border-gray-200 hover:border-gray-300'
@@ -425,7 +432,7 @@ export default function EditorPage() {
                   title={mode.description}
                 >
                   <Icon className="w-4 h-4 mb-1" />
-                  <span className="text-sm font-medium">{mode.label}</span>
+                  <span className="text-xs md:text-sm font-medium">{mode.label}</span>
                 </button>
               )
             })}
@@ -433,7 +440,7 @@ export default function EditorPage() {
         </div>
 
         {/* Prompt input */}
-        <div className="flex-1 p-4 overflow-auto">
+        <div className="flex-1 p-3 md:p-4 overflow-auto">
           <label className="text-sm font-medium text-gray-700 mb-2 block">
             描述您的需求
           </label>
@@ -441,7 +448,7 @@ export default function EditorPage() {
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             placeholder="例如：生成一个机器学习训练流程图，包含数据预处理、模型训练、评估和部署四个阶段..."
-            className="w-full h-40 p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full h-32 md:h-40 p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm md:text-base"
           />
 
           {/* Reference image */}
@@ -461,7 +468,7 @@ export default function EditorPage() {
                 <img
                   src={`data:image/png;base64,${referenceImage}`}
                   alt="Reference"
-                  className="w-full h-32 object-cover rounded-lg"
+                  className="w-full h-28 md:h-32 object-cover rounded-lg"
                 />
                 <button
                   onClick={() => setReferenceImage(null)}
@@ -474,14 +481,14 @@ export default function EditorPage() {
               <div className="space-y-2">
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-full h-20 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center text-gray-500 hover:border-primary-500 hover:text-primary-600 transition-colors"
+                  className="w-full h-16 md:h-20 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center text-gray-500 hover:border-primary-500 hover:text-primary-600 transition-colors"
                 >
                   <Upload className="w-5 h-5 mb-1" />
                   <span className="text-sm">上传参考图片</span>
                 </button>
                 <button
                   onClick={() => setIsGalleryOpen(true)}
-                  className="w-full h-12 border border-gray-300 rounded-lg flex items-center justify-center gap-2 text-gray-600 hover:border-primary-500 hover:text-primary-600 transition-colors"
+                  className="w-full h-10 md:h-12 border border-gray-300 rounded-lg flex items-center justify-center gap-2 text-gray-600 hover:border-primary-500 hover:text-primary-600 transition-colors"
                 >
                   <Library className="w-4 h-4" />
                   <span className="text-sm">从素材库选择</span>
@@ -492,14 +499,14 @@ export default function EditorPage() {
         </div>
 
         {/* Generate button & Progress */}
-        <div className="p-4 border-t border-gray-200">
+        <div className="p-3 md:p-4 border-t border-gray-200">
           {/* Visual task list */}
           {isGenerating && generationSteps.length > 0 && (
             <div className="mb-3 bg-gray-50 rounded-lg p-2 border border-gray-200">
               <div className="text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wide">
                 处理进度
               </div>
-              <div className="space-y-1 max-h-36 overflow-y-auto">
+              <div className="space-y-1 max-h-28 md:max-h-36 overflow-y-auto">
                 {generationSteps.map((step, idx) => {
                   const statusIcon =
                     step.status === 'complete' ? (
@@ -566,11 +573,11 @@ export default function EditorPage() {
             {isGenerating && (
               <button
                 onClick={handleStopGenerate}
-                className="px-4 btn-secondary flex items-center gap-2 text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
+                className="px-3 md:px-4 btn-secondary flex items-center gap-1 md:gap-2 text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
                 title="停止生成并退出任务"
               >
                 <Ban className="w-4 h-4" />
-                停止
+                <span className="hidden sm:inline">停止</span>
               </button>
             )}
           </div>
@@ -578,41 +585,44 @@ export default function EditorPage() {
       </div>
 
       {/* Main editor area */}
-      <div className="flex-1 flex flex-col bg-gray-100">
+      <div className={`
+        flex-1 flex flex-col bg-gray-100 min-h-0
+        ${showInputPanel ? 'hidden md:flex' : 'flex'}
+      `}>
         {/* Toolbar */}
-        <div className="h-12 bg-white border-b border-gray-200 flex items-center justify-between px-4">
+        <div className="h-12 bg-white border-b border-gray-200 flex items-center justify-between px-3 md:px-4">
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-500">编辑器</span>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={handleSave}
-              className="btn-secondary flex items-center gap-2 text-sm"
+              className="btn-secondary flex items-center gap-1 md:gap-2 text-xs md:text-sm px-2 md:px-3"
             >
               <Save className="w-4 h-4" />
-              保存
+              <span className="hidden sm:inline">保存</span>
             </button>
             <div className="relative group">
-              <button className="btn-primary flex items-center gap-2 text-sm">
+              <button className="btn-primary flex items-center gap-1 md:gap-2 text-xs md:text-sm px-2 md:px-3">
                 <Download className="w-4 h-4" />
-                导出
+                <span className="hidden sm:inline">导出</span>
               </button>
-              <div className="absolute right-0 top-full mt-1 w-32 bg-white rounded-lg shadow-lg border border-gray-200 hidden group-hover:block z-10">
+              <div className="absolute right-0 top-full mt-1 w-28 md:w-32 bg-white rounded-lg shadow-lg border border-gray-200 hidden group-hover:block z-10">
                 <button
                   onClick={() => handleExport('xml')}
-                  className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 first:rounded-t-lg"
+                  className="w-full px-3 md:px-4 py-2 text-left text-xs md:text-sm hover:bg-gray-50 first:rounded-t-lg"
                 >
                   导出 XML
                 </button>
                 <button
                   onClick={() => handleExport('png')}
-                  className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50"
+                  className="w-full px-3 md:px-4 py-2 text-left text-xs md:text-sm hover:bg-gray-50"
                 >
                   导出 PNG
                 </button>
                 <button
                   onClick={() => handleExport('svg')}
-                  className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 last:rounded-b-lg"
+                  className="w-full px-3 md:px-4 py-2 text-left text-xs md:text-sm hover:bg-gray-50 last:rounded-b-lg"
                 >
                   导出 SVG
                 </button>
@@ -630,6 +640,28 @@ export default function EditorPage() {
             isGenerating={isGenerating}
           />
         </div>
+      </div>
+
+      {/* Mobile tab switcher */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex z-30">
+        <button
+          onClick={() => setShowInputPanel(true)}
+          className={`flex-1 py-3 flex items-center justify-center gap-2 text-sm font-medium ${
+            showInputPanel ? 'text-primary-600 bg-primary-50' : 'text-gray-600'
+          }`}
+        >
+          <PenSquare className="w-4 h-4" />
+          输入
+        </button>
+        <button
+          onClick={() => setShowInputPanel(false)}
+          className={`flex-1 py-3 flex items-center justify-center gap-2 text-sm font-medium ${
+            !showInputPanel ? 'text-primary-600 bg-primary-50' : 'text-gray-600'
+          }`}
+        >
+          <Monitor className="w-4 h-4" />
+          画布
+        </button>
       </div>
 
       {/* Reference Gallery Modal */}
