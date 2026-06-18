@@ -43,6 +43,10 @@ yarn-error.log*
 frontend/dist/
 frontend/build/
 
+# Draw.io offline package (not used)
+backend/app/static/draw.war
+backend/app/static/drawio/
+
 # Data and uploads
 backend/data/
 !backend/data/.gitkeep
