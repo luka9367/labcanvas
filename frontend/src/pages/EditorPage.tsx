@@ -392,8 +392,8 @@ export default function EditorPage() {
 
   return (
     <div className="flex flex-col md:flex-row h-full overflow-hidden">
-      {/* Input panel: mobile top half, desktop left sidebar */}
-      <div className="h-[50%] md:h-full md:w-80 lg:w-96 bg-white border-b md:border-b-0 md:border-r border-gray-200 flex flex-col shrink-0 overflow-hidden">
+      {/* Input panel: mobile top 60%, desktop left sidebar */}
+      <div className="h-[60%] md:h-full md:w-80 lg:w-96 bg-white border-b md:border-b-0 md:border-r border-gray-200 flex flex-col shrink-0 overflow-hidden">
         {/* Header */}
         <div className="p-3 md:p-4 border-b border-gray-200 shrink-0">
           <input
@@ -577,8 +577,8 @@ export default function EditorPage() {
         </div>
       </div>
 
-      {/* Canvas area: mobile bottom half, desktop right side */}
-      <div className="h-[50%] md:h-full md:flex-1 flex flex-col bg-gray-100 min-h-0 overflow-hidden">
+      {/* Canvas area: mobile bottom 40%, desktop right side */}
+      <div className="h-[40%] md:h-full md:flex-1 flex flex-col bg-gray-100 min-h-0 overflow-hidden">
         {/* Toolbar */}
         <div className="h-12 bg-white border-b border-gray-200 flex items-center justify-between px-3 md:px-4 shrink-0">
           <div className="flex items-center gap-2">
