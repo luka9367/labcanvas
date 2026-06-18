@@ -231,7 +231,7 @@ export default function SettingsPage() {
               <div className="relative">
                 <input
                   type={showKeys.llm_api_key ? 'text' : 'password'}
-                  value={settings.llm_api_key}
+                  value={showKeys.llm_api_key ? settings.llm_api_key : ''}
                   onChange={(e) => handleChange('llm_api_key', e.target.value)}
                   placeholder={settings.llm_api_key ? formatKeyDisplay(settings.llm_api_key) : "请输入您的智谱 AI API Key"}
                   className="input pr-20"
@@ -271,7 +271,7 @@ export default function SettingsPage() {
               <div className="relative">
                 <input
                   type={showKeys.image_api_key ? 'text' : 'password'}
-                  value={settings.image_api_key}
+                  value={showKeys.image_api_key ? settings.image_api_key : ''}
                   onChange={(e) => handleChange('image_api_key', e.target.value)}
                   placeholder={settings.image_api_key ? formatKeyDisplay(settings.image_api_key) : "可选"}
                   className="input pr-20"
@@ -308,7 +308,7 @@ export default function SettingsPage() {
               <div className="relative">
                 <input
                   type={showKeys.vision_api_key ? 'text' : 'password'}
-                  value={settings.vision_api_key}
+                  value={showKeys.vision_api_key ? settings.vision_api_key : ''}
                   onChange={(e) => handleChange('vision_api_key', e.target.value)}
                   placeholder={settings.vision_api_key ? formatKeyDisplay(settings.vision_api_key) : "可选"}
                   className="input pr-20"
@@ -457,7 +457,7 @@ export default function SettingsPage() {
               <div className="relative">
                 <input
                   type={showKeys.mineru_token ? 'text' : 'password'}
-                  value={settings.mineru_token}
+                  value={showKeys.mineru_token ? settings.mineru_token : ''}
                   onChange={(e) => handleChange('mineru_token', e.target.value)}
                   placeholder={settings.mineru_token ? formatKeyDisplay(settings.mineru_token) : "可选"}
                   className="input pr-20"

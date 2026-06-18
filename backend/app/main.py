@@ -112,8 +112,9 @@ def create_app() -> FastAPI:
     async def api_health_check():
         return {"status": "ok", "version": settings.VERSION}
 
-    # Static files (serve frontend at root, after API routes so API takes precedence)
-    app.mount("/", StaticFiles(directory=str(STATIC_DIR), html=True), name="static")
+    # Static files: serve frontend at root AND keep /static path for gallery/assets
+    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static-files")
+    app.mount("/", StaticFiles(directory=str(STATIC_DIR), html=True), name="frontend")
 
     return app
 
