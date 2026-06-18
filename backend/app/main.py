@@ -104,9 +104,6 @@ def create_app() -> FastAPI:
     # API routes
     app.include_router(api_router, prefix=API_V1_PREFIX)
 
-    # Static files
-    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
-
     @app.get("/health")
     async def health_check():
         return {"status": "ok", "version": settings.VERSION}
@@ -114,6 +111,9 @@ def create_app() -> FastAPI:
     @app.get("/api/v1/health")
     async def api_health_check():
         return {"status": "ok", "version": settings.VERSION}
+
+    # Static files (serve frontend at root, after API routes so API takes precedence)
+    app.mount("/", StaticFiles(directory=str(STATIC_DIR), html=True), name="static")
 
     return app
 
