@@ -63,3 +63,7 @@ logs/
 # OS
 .DS_Store
 Thumbs.db
+
+# cpolar local config (contains auth token)
+.cpolar/
+
