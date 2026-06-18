@@ -63,9 +63,6 @@ interface AppContextType {
   generationMode: GenerationMode
   setGenerationMode: (mode: GenerationMode) => void
   
-  // Refresh functions
-  refreshProjects: () => Promise<void>
-  setRefreshProjects: (fn: () => Promise<void>) => void
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined)
@@ -90,7 +87,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [generationMode, setGenerationModeState] = useState<GenerationMode>(() => 
     storage.get(STORAGE_KEYS.GENERATION_MODE, 'auto')
   )
-  const [refreshProjects, setRefreshProjectsState] = useState<() => Promise<void>>(async () => {})
 
   // Persist settings to localStorage (excluding sensitive data)
   const setSettings = useCallback((newSettings: Settings) => {
@@ -115,10 +111,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const setGenerationMode = useCallback((mode: GenerationMode) => {
     setGenerationModeState(mode)
     storage.set(STORAGE_KEYS.GENERATION_MODE, mode)
-  }, [])
-
-  const setRefreshProjects = useCallback((fn: () => Promise<void>) => {
-    setRefreshProjectsState(() => fn)
   }, [])
 
   // Load settings from API on mount
@@ -162,8 +154,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setActivePanel,
         generationMode,
         setGenerationMode,
-        refreshProjects,
-        setRefreshProjects,
       }}
     >
       {children}
