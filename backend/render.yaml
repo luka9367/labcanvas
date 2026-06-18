@@ -1,0 +1,19 @@
+# Render Blueprint — 一键部署后端
+# 使用方法：在 Render Dashboard 点击 "New +" → "Blueprint" → 选择此文件
+# 免费额度：512MB RAM，15分钟无访问休眠（建议配合 UptimeRobot 免费防休眠）
+services:
+  - type: web
+    name: labcanvas-api
+    runtime: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12"
+      # 允许所有跨域来源（前端 Vercel 默认域名动态变化，通配最安全）
+      - key: CORS_ALLOW_ALL
+        value: "true"
+      # 如需预置默认 LLM API Key（用户可不填），取消下行注释
+      # - key: LLM_API_KEY
+      #   value: "your-zhipu-api-key"
