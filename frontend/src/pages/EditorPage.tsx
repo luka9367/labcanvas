@@ -391,9 +391,9 @@ export default function EditorPage() {
   }
 
   return (
-    <div className="flex flex-col md:flex-row h-full overflow-hidden">
-      {/* Input panel: mobile top 60%, desktop left sidebar */}
-      <div className="h-[60%] md:h-full md:w-80 lg:w-96 bg-white border-b md:border-b-0 md:border-r border-gray-200 flex flex-col shrink-0 overflow-hidden">
+    <div className="flex flex-col md:flex-row h-full md:overflow-hidden overflow-y-auto">
+      {/* Input panel: mobile scrollable, desktop left sidebar */}
+      <div className="md:h-full md:w-80 lg:w-96 bg-white border-b md:border-b-0 md:border-r border-gray-200 flex flex-col shrink-0">
         {/* Header */}
         <div className="p-3 md:p-4 border-b border-gray-200 shrink-0">
           <input
@@ -432,8 +432,8 @@ export default function EditorPage() {
           </div>
         </div>
 
-        {/* Scrollable prompt area */}
-        <div className="flex-1 min-h-0 overflow-y-auto p-3 md:p-4">
+        {/* Prompt area */}
+        <div className="flex-1 md:flex-1 md:min-h-0 md:overflow-y-auto p-3 md:p-4">
           <label className="text-sm font-medium text-gray-700 mb-2 block">
             描述您的需求
           </label>
@@ -441,7 +441,7 @@ export default function EditorPage() {
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             placeholder="例如：生成一个机器学习训练流程图，包含数据预处理、模型训练、评估和部署四个阶段..."
-            className="w-full h-28 md:h-40 p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm md:text-base"
+            className="w-full h-36 md:h-40 p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm md:text-base"
           />
 
           {/* Reference image */}
@@ -577,8 +577,8 @@ export default function EditorPage() {
         </div>
       </div>
 
-      {/* Canvas area: mobile bottom 40%, desktop right side */}
-      <div className="h-[40%] md:h-full md:flex-1 flex flex-col bg-gray-100 min-h-0 overflow-hidden">
+      {/* Canvas area: mobile fixed height, desktop right side */}
+      <div className="h-[50vh] md:h-full md:flex-1 flex flex-col bg-gray-100 min-h-0 overflow-hidden">
         {/* Toolbar */}
         <div className="h-12 bg-white border-b border-gray-200 flex items-center justify-between px-3 md:px-4 shrink-0">
           <div className="flex items-center gap-2">
