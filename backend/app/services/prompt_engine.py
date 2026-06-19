@@ -9,6 +9,7 @@
 
 import json
 import logging
+import re
 from typing import Dict, List, Optional
 
 from app.services.llm_service import LLMService
@@ -159,9 +160,11 @@ class PromptEngine:
             "premium tech aesthetic with crisp details"
         ),
         "tourist_attraction": (
-            "iconic tourist attraction view with grand composition, "
-            "pleasant natural lighting, recognizable landmark features, "
-            "vibrant yet realistic colors, inspiring travel atmosphere"
+            "striking city landmark and commercial plaza exterior, "
+            "grand architectural photography composition, "
+            "recognizable modern building facade, spacious public square in foreground, "
+            "clear sky, pleasant natural daylight, "
+            "sharp realistic colors, inspiring urban atmosphere"
         ),
         "presentation": (
             "professional presentation slide or infographic with clear hierarchy, "
@@ -270,6 +273,36 @@ class PromptEngine:
 
     def __init__(self, llm_service: LLMService) -> None:
         self.llm = llm_service
+
+    @staticmethod
+    def _preprocess_user_prompt(user_prompt: str) -> str:
+        """Remove common Chinese action prefixes so they don't pollute the image prompt."""
+        text = user_prompt.strip()
+        prefixes = [
+            r"^生成(?:一张|一个|一幅|些|的)?\s*",
+            r"^画(?:一张|一个|一幅|些|的)?\s*",
+            r"^给我画(?:一张|一个|一幅|些|的)?\s*",
+            r"^帮我画(?:一张|一个|一幅|些|的)?\s*",
+            r"^制作(?:一张|一个|一幅|些|的)?\s*",
+            r"^做(?:一张|一个|一幅|些|的)?\s*",
+            r"^来(?:一张|一个|一幅|些|的)?\s*",
+            r"^创作(?:一张|一个|一幅|些|的)?\s*",
+        ]
+        for pat in prefixes:
+            text = re.sub(pat, "", text, flags=re.IGNORECASE)
+        return text.strip()
+
+    @staticmethod
+    def _infer_landmark_type(user_prompt: str) -> Optional[str]:
+        """Heuristic: city + plaza/landmark/building should be treated as tourist attraction."""
+        text = user_prompt.lower()
+        landmark_kws = {"广场", "大厦", "大楼", "地标", "塔", "中心", "之门", "体育场", "体育馆", "图书馆", "博物馆", "剧院", "机场", "车站", "桥", "摩天轮", "喷泉"}
+        city_pattern = re.compile(r"[\u4e00-\u9fa5]{2,6}(市|县|区)?")
+        has_city = bool(city_pattern.search(user_prompt))
+        has_landmark = any(kw in text for kw in landmark_kws)
+        if has_city and has_landmark:
+            return "tourist_attraction"
+        return None
 
     def _detect_scene_type(self, user_prompt: str) -> str:
         """启发式判断场景类型：academic 或 daily."""
@@ -402,7 +435,13 @@ academic, technical, minimalist, vibrant, realistic, cute, festive, casual, phot
 - 如果是 academic 场景，不要返回 cute/festive/casual/photographic/anime/ancient_chinese/delicious/playful 标签
 - 标签数量建议 1-2 个"""
 
-        user_text = f"用户描述：{user_prompt}"
+        # 1) 清洗用户输入中的动作前缀，避免把“生成/画”本身当作画面内容
+        clean_prompt = self._preprocess_user_prompt(user_prompt)
+
+        # 2) 对常见城市地标/商业广场做兜底识别
+        chart_type_hint = self._infer_landmark_type(clean_prompt)
+
+        user_text = f"用户描述：{clean_prompt}"
         if style_reference:
             user_text += f"\n风格参考：{style_reference}"
 
@@ -419,6 +458,10 @@ academic, technical, minimalist, vibrant, realistic, cute, festive, casual, phot
 
             scene_type = data.get("scene_type", self._detect_scene_type(user_prompt))
             chart_type = data.get("chart_type", "other")
+            # Heuristic override for city landmarks (e.g. "徐州苏宁广场")
+            if chart_type_hint:
+                chart_type = chart_type_hint
+                scene_type = "daily"
             style_tags = data.get("style_tags", ["realistic" if scene_type == "daily" else "academic"])
 
             # 防御性清洗：日常场景强制移除学术/商务标签；学术场景强制移除生活化标签
