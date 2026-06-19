@@ -10,7 +10,7 @@ from app.schemas.paper import GallerySearchResult, StyleReference
 
 logger = logging.getLogger(__name__)
 
-GALLERY_DATA_PATH = Path(__file__).parent.parent.parent / "static" / "gallery" / "gallery.json"
+GALLERY_DATA_PATH = Path(__file__).parent.parent / "static" / "gallery" / "gallery.json"
 
 _instance: GalleryService | None = None
 
