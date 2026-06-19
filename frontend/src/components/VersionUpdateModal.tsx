@@ -7,10 +7,16 @@ interface VersionUpdateModalProps {
 }
 
 const VERSION_DATA = {
-  version: 'v1.2.1',
-  date: '2026年6月18日',
+  version: 'v1.2.2',
+  date: '2026年6月29日',
   author: '范嘉许',
   updates: [
+    {
+      icon: Sparkles,
+      title: '优化日常生活类场景生图效果',
+      desc: '重构 PromptEngine 需求分析逻辑，自动识别输入属于学术图表还是日常生活场景。针对小猫小狗、节日庆祝、人物肖像、校园风景、自然风光等日常主题，采用 realistic、cute、festive、casual 等自然生活化风格，并移除学术图表的强制规范（LaTeX 排版、矢量图边缘、模块框等），避免日常画面被过度学术化，观感更自然亲切。',
+      highlight: '日常场景不再强行学术风',
+    },
     {
       icon: Smartphone,
       title: '移动端全面适配优化',
