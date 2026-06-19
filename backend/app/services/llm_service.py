@@ -9,6 +9,8 @@ import asyncio
 import base64
 import json
 import logging
+import time
+from pathlib import Path
 from typing import AsyncGenerator, Optional, List, Dict, Any
 
 import httpx
@@ -36,6 +38,20 @@ TIMEOUT_IMAGE_GEN = httpx.Timeout(connect=10.0, read=240.0, write=10.0, pool=10.
 ZHIPU_DEFAULT_BASE_URL = "https://open.bigmodel.cn/api/paas/v4"
 ZHIPU_DEFAULT_TEXT_MODEL = "glm-4-flash"
 ZHIPU_DEFAULT_IMAGE_MODEL = "cogview-3-flash"
+
+# Audit log for every actual API call (model, timestamp, endpoint)
+AUDIT_LOG_PATH = Path(__file__).resolve().parent.parent.parent / "data" / "llm_audit.log"
+
+
+def _audit_api_call(model: str, endpoint: str, status: str = "allowed") -> None:
+    """Write a single-line audit record for each outbound Zhipu API call."""
+    try:
+        AUDIT_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+        with AUDIT_LOG_PATH.open("a", encoding="utf-8") as f:
+            ts = time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime())
+            f.write(f"{ts}\t{model}\t{endpoint}\t{status}\n")
+    except Exception as e:
+        logger.warning("Failed to write audit log: %s", e)
 
 
 class LLMService:
@@ -210,8 +226,10 @@ class LLMService:
         model_to_use = model or self.model
         is_free, reason = await check_model_free(model_to_use)
         if not is_free:
+            _audit_api_call(model_to_use, "chat/completions", "blocked")
             raise ValueError(reason)
 
+        _audit_api_call(model_to_use, "chat/completions", "allowed")
         url = f"{self.base_url}/chat/completions"
         headers = await self._auth_headers("text")
         
@@ -276,8 +294,10 @@ class LLMService:
         model_to_use = model or self.image_model
         is_free, reason = await check_model_free(model_to_use)
         if not is_free:
+            _audit_api_call(model_to_use, "images/generations", "blocked")
             raise ValueError(reason)
 
+        _audit_api_call(model_to_use, "images/generations", "allowed")
         url = f"{self.base_url}/images/generations"
         headers = await self._auth_headers("image")
 

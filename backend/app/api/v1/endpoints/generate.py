@@ -96,22 +96,27 @@ async def chat_completion(
     stream: bool = False,
     llm_service: LLMServiceDep = None,
 ):
-    """Direct chat completion endpoint."""
+    """Direct chat completion endpoint.
+
+    NOTE: The supplied model is ignored; only free models are ever used.
+    """
     try:
-        if model:
-            llm_service.model = model
-        
         response = await llm_service.chat_completion(
             messages=messages,
             temperature=temperature,
-            stream=stream
+            stream=stream,
         )
         
         if stream:
             async def stream_generator():
                 async for chunk in llm_service._post_stream(
                     f"{llm_service.base_url}/chat/completions",
-                    {"messages": messages, "model": model or llm_service.model, "temperature": temperature, "stream": True},
+                    {
+                        "messages": messages,
+                        "model": llm_service.model,
+                        "temperature": temperature,
+                        "stream": True,
+                    },
                     await llm_service._auth_headers()
                 ):
                     yield {"data": chunk}
