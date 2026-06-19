@@ -49,17 +49,13 @@ class LLMService:
 
     @property
     def model(self) -> str:
-        if self._model_override is not None:
-            return self._model_override
-        settings = load_settings()
-        model = settings.get("llm_model", "")
-        if not model:
-            return ZHIPU_DEFAULT_TEXT_MODEL
-        return model
+        # Defense-in-depth: always use the free text model
+        return ZHIPU_DEFAULT_TEXT_MODEL
 
     @model.setter
     def model(self, value: Optional[str]) -> None:
-        self._model_override = value
+        # Ignore any override that could point to a paid model
+        self._model_override = None
 
     @property
     def base_url(self) -> str:
@@ -77,17 +73,13 @@ class LLMService:
 
     @property
     def image_model(self) -> str:
-        if self._image_model_override is not None:
-            return self._image_model_override
-        settings = load_settings()
-        model = settings.get("llm_image_model", "")
-        if not model:
-            return ZHIPU_DEFAULT_IMAGE_MODEL
-        return model
+        # Defense-in-depth: always use the free image model
+        return ZHIPU_DEFAULT_IMAGE_MODEL
 
     @image_model.setter
     def image_model(self, value: Optional[str]) -> None:
-        self._image_model_override = value
+        # Ignore any override that could point to a paid model
+        self._image_model_override = None
 
     def _require_api_key(self) -> str:
         """Get API key from settings."""

@@ -26,6 +26,23 @@ DEFAULT_SETTINGS = {
     "language": "zh",
 }
 
+# 仅允许智谱免费模型，彻底排除付费模型被使用的可能
+FREE_MODELS = {
+    "llm_model": {"glm-4-flash"},
+    "llm_image_model": {"cogview-3-flash"},
+    "llm_component_model": {"glm-4-flash"},
+}
+
+
+def _sanitize_model_settings(settings: dict) -> dict:
+    """Force all model fields to free-only models."""
+    sanitized = dict(settings)
+    for field, allowed in FREE_MODELS.items():
+        value = sanitized.get(field, "")
+        if not isinstance(value, str) or value.strip() not in allowed:
+            sanitized[field] = DEFAULT_SETTINGS[field]
+    return sanitized
+
 
 def ensure_data_dir():
     """Ensure data directory exists."""
@@ -42,18 +59,19 @@ def load_settings() -> dict:
                 # Merge with defaults to ensure all keys exist
                 merged = DEFAULT_SETTINGS.copy()
                 merged.update(settings)
-                return merged
+                return _sanitize_model_settings(merged)
         except (json.JSONDecodeError, IOError):
             pass
-    return DEFAULT_SETTINGS.copy()
+    return _sanitize_model_settings(DEFAULT_SETTINGS.copy())
 
 
 def save_settings(settings: dict) -> bool:
     """Save settings to file."""
     ensure_data_dir()
     try:
+        sanitized = _sanitize_model_settings(settings)
         with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
-            json.dump(settings, f, ensure_ascii=False, indent=2)
+            json.dump(sanitized, f, ensure_ascii=False, indent=2)
         return True
     except IOError:
         return False
@@ -70,8 +88,9 @@ class SettingsService:
         """Update settings with new values."""
         current = load_settings()
         current.update(updates)
-        save_settings(current)
-        return current
+        sanitized = _sanitize_model_settings(current)
+        save_settings(sanitized)
+        return sanitized
     
     def get_setting(self, key: str, default=None):
         """Get a specific setting value."""
