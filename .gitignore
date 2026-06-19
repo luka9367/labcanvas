@@ -50,6 +50,7 @@ backend/app/static/drawio/
 # Data and uploads
 backend/data/
 !backend/data/.gitkeep
+backend/app/data/settings.json
 backend/static/gallery/*
 !backend/static/gallery/.gitkeep
 backend/static/bioicons/svgs/*
