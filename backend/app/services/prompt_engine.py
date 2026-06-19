@@ -176,6 +176,21 @@ class PromptEngine:
         "data visualization", "chart", "graph", "system", "model",
     }
 
+    # 常见地域文化俗称兜底映射（LLM 也可能不认识时做最后防线）
+    CULTURAL_LANDMARKS: Dict[str, str] = {
+        "上海三件套": "上海陆家嘴三大地标建筑：东方明珠广播电视塔、上海中心大厦、上海环球金融中心",
+        "陆家嘴三件套": "上海陆家嘴三大地标建筑：东方明珠广播电视塔、上海中心大厦、上海环球金融中心",
+        "小蛮腰": "广州塔（Canton Tower）",
+        "大裤衩": "中央电视台总部大楼（CCTV Headquarters）",
+        "鸟巢": "北京国家体育场（National Stadium）",
+        "水立方": "北京国家游泳中心（National Aquatics Center）",
+        "东方之门": "苏州东方之门（The Gate of the Orient）",
+        "大秋裤": "苏州东方之门（The Gate of the Orient）",
+        "比萨斜塔": "意大利比萨城大教堂独立钟楼",
+        "自由女神像": "美国纽约自由岛自由女神像",
+        "埃菲尔铁塔": "法国巴黎埃菲尔铁塔",
+    }
+
     def __init__(self, llm_service: LLMService) -> None:
         self.llm = llm_service
 
@@ -186,6 +201,38 @@ class PromptEngine:
             if kw.lower() in text:
                 return "academic"
         return "daily"
+
+    async def _expand_cultural_terms(self, user_prompt: str) -> str:
+        """识别并展开用户输入中的地域文化俗称.
+
+        先让 LLM 进行语义展开，失败或不明确时回退到本地映射。
+        """
+        # 先进行本地兜底映射（精确匹配常见俗称）
+        for slang, formal in self.CULTURAL_LANDMARKS.items():
+            if slang in user_prompt:
+                return user_prompt.replace(slang, formal)
+
+        # 让 LLM 检查是否有其他需要展开的俗称
+        system_prompt = """你是一位中国文化与地理常识助手。
+请检查用户描述中是否包含中国城市地标、建筑或景点的民间俗称（如"上海三件套"、"小蛮腰"、"大裤衩"、"鸟巢"等）。
+如果包含，请将其展开为正式、明确的描述；如果不包含，请原样返回。
+
+只输出处理后的最终描述，不要解释。"""
+
+        try:
+            response = await self.llm.chat_completion(
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
+                ],
+                temperature=0.1,
+            )
+            content = await self.llm.extract_xml_from_response(response)
+            expanded = content.strip()
+            return expanded if expanded else user_prompt
+        except Exception as e:
+            logger.warning("地域文化术语展开失败: %s，使用原始输入", e)
+            return user_prompt
 
     async def optimize(
         self,
@@ -202,11 +249,14 @@ class PromptEngine:
                 "analysis": 结构化分析摘要(JSON字符串),
             }
         """
+        # 预处理：展开地域文化俗称
+        expanded_prompt = await self._expand_cultural_terms(user_prompt)
+
         # Level 1: 需求结构化分析
-        analysis = await self._analyze_requirement(user_prompt, style_reference)
+        analysis = await self._analyze_requirement(expanded_prompt, style_reference)
 
         # Level 2: 核心提示词生成
-        base_prompt = self._build_base_prompt(user_prompt, analysis)
+        base_prompt = self._build_base_prompt(expanded_prompt, analysis)
 
         # Level 3: 质量增强层
         enhanced_prompt = self._apply_quality_boost(base_prompt, analysis)
