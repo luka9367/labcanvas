@@ -88,6 +88,11 @@ class PromptEngine:
             "aligned feature checklists, visual contrast indicators, "
             "summary conclusion block at bottom"
         ),
+        "presentation": (
+            "professional presentation slide or infographic with clear hierarchy, "
+            "clean layout, readable typography, "
+            "coordinated color scheme and concise visual elements"
+        ),
     }
 
     # 日常场景构图模板库
@@ -98,8 +103,8 @@ class PromptEngine:
             "warm and friendly atmosphere"
         ),
         "festival": (
-            "festive celebration scene with seasonal decorations, "
-            "warm inviting lighting, rich colors, joyful atmosphere, "
+            "festive celebration scene with authentic cultural decorations, "
+            "warm inviting lighting, rich symbolic colors, joyful atmosphere, "
             "balanced composition with clear focal point"
         ),
         "portrait": (
@@ -120,6 +125,48 @@ class PromptEngine:
             "everyday life scene with natural composition, "
             "soft ambient lighting, relatable atmosphere, "
             "clean and pleasant visual style"
+        ),
+        "portrait_photo": (
+            "professional portrait photo with studio-quality lighting, "
+            "natural skin texture, authentic pose and expression, "
+            "clean background or subtle bokeh, flattering color grading"
+        ),
+        "ancient_anime": (
+            "Chinese ancient style anime illustration with flowing hanfu garments, "
+            "elegant traditional architecture or natural scenery, "
+            "soft ink-wash inspired colors, dreamy atmosphere, "
+            "delicate line work and expressive characters"
+        ),
+        "food_gift": (
+            "appetizing food or elegant gift product shot with soft directional lighting, "
+            "beautiful plating or packaging, shallow depth of field, "
+            "warm inviting tones and fine texture details"
+        ),
+        "emoji": (
+            "cute expressive emoji or sticker design with simple clean shapes, "
+            "bold readable expression, flat colors, "
+            "friendly cartoon style on transparent or solid background"
+        ),
+        "logo_poster": (
+            "clean logo or poster design with strong visual identity, "
+            "balanced typography and iconography, "
+            "professional color scheme, clear focal point, "
+            "suitable for print and digital display"
+        ),
+        "digital_product": (
+            "sleek digital product showcase with clean modern device mockups, "
+            "subtle reflections and shadows, minimalist background, "
+            "premium tech aesthetic with crisp details"
+        ),
+        "tourist_attraction": (
+            "iconic tourist attraction view with grand composition, "
+            "pleasant natural lighting, recognizable landmark features, "
+            "vibrant yet realistic colors, inspiring travel atmosphere"
+        ),
+        "presentation": (
+            "professional presentation slide or infographic with clear hierarchy, "
+            "clean layout, readable typography, "
+            "coordinated color scheme and concise visual elements"
         ),
     }
 
@@ -162,6 +209,36 @@ class PromptEngine:
         "casual": (
             "casual everyday illustration style, relaxed composition, "
             "natural colors, approachable and down-to-earth mood"
+        ),
+        "photographic": (
+            "professional photography style, natural bokeh, "
+            "true-to-life colors, soft flattering light, "
+            "high-end camera quality with fine detail"
+        ),
+        "anime": (
+            "anime illustration style, clean cel-shading, "
+            "expressive large eyes, vibrant hair colors, "
+            "dynamic composition with emotional atmosphere"
+        ),
+        "ancient_chinese": (
+            "Chinese traditional painting inspired style, elegant ink wash aesthetics, "
+            "flowing hanfu robes, classical architecture, "
+            "soft muted colors with subtle gold accents"
+        ),
+        "delicious": (
+            "food photography style, appetizing lighting, "
+            "rich textures and fresh ingredients, "
+            "warm color grading that stimulates appetite"
+        ),
+        "corporate": (
+            "corporate business style, clean professional layout, "
+            "confident typography, trustworthy blue and neutral tones, "
+            "polished and presentation-ready"
+        ),
+        "playful": (
+            "playful and fun cartoon style, bold outlines, "
+            "bright cheerful colors, exaggerated expressions, "
+            "instantly appealing and shareable"
         ),
     }
 
@@ -290,13 +367,13 @@ class PromptEngine:
         system_prompt = """你是一位图像需求分析专家。请对用户描述进行结构化分析。
 
 首先判断场景类型：
-- academic（学术/技术图表）: 用户需要流程图、架构图、算法图、数据可视化、神经网络图、框架图、对比图等
-- daily（日常生活场景）: 用户描述的是动物、节日、人物、校园风景、自然风光、生活日常等
+- academic（学术/技术图表）: 用户需要流程图、架构图、算法图、数据可视化、神经网络图、框架图、对比图、汇报展示等
+- daily（日常生活场景）: 用户描述的是节日、真人写真、古风动漫、美食礼物、表情包、LOGO海报、数码产品、旅游景点、动物、人物、校园风景、自然风光、生活日常等
 
 必须按以下JSON格式输出（直接输出JSON，不要markdown代码块）：
 {
   "scene_type": "academic|daily",
-  "chart_type": "system_architecture|flowchart|algorithm|data_visualization|neural_network|framework|comparison|animal|festival|portrait|campus|nature|lifestyle|other",
+  "chart_type": "system_architecture|flowchart|algorithm|data_visualization|neural_network|framework|comparison|presentation|animal|festival|portrait|portrait_photo|ancient_anime|food_gift|emoji|logo_poster|digital_product|tourist_attraction|campus|nature|lifestyle|other",
   "key_elements": ["元素1", "元素2", "元素3"],
   "composition_template": "简短描述推荐的构图方式",
   "style_tags": ["标签1", "标签2"],
@@ -304,15 +381,25 @@ class PromptEngine:
 }
 
 chart_type 必须从以下选择：
-学术类：system_architecture, flowchart, algorithm, data_visualization, neural_network, framework, comparison, other
-日常类：animal, festival, portrait, campus, nature, lifestyle, other
+学术类：system_architecture, flowchart, algorithm, data_visualization, neural_network, framework, comparison, presentation, other
+日常类：animal, festival, portrait, portrait_photo, ancient_anime, food_gift, emoji, logo_poster, digital_product, tourist_attraction, campus, nature, lifestyle, other
+
+各日常类型说明：
+- festival: 中外节日、节庆活动、文化庆典
+- portrait_photo: 真人写真、证件照、艺术人像
+- ancient_anime: 古风、国风、汉服、古代动漫人物
+- food_gift: 美食、甜品、礼物、包装
+- emoji: 表情包、贴纸、Q版头像
+- logo_poster: LOGO、海报、封面、宣传图
+- digital_product: 手机、电脑、耳机、数码产品展示
+- tourist_attraction: 旅游景点、城市地标、名胜古迹
 
 style_tags 从以下选择（可多选）：
-academic, technical, minimalist, vibrant, realistic, cute, festive, casual
+academic, technical, minimalist, vibrant, realistic, cute, festive, casual, photographic, anime, ancient_chinese, delicious, corporate, playful
 
 注意：
 - 如果是 daily 场景，不要返回 academic/technical 标签
-- 如果是 academic 场景，不要返回 cute/festive/casual 标签
+- 如果是 academic 场景，不要返回 cute/festive/casual/photographic/anime/ancient_chinese/delicious/playful 标签
 - 标签数量建议 1-2 个"""
 
         user_text = f"用户描述：{user_prompt}"
@@ -334,13 +421,16 @@ academic, technical, minimalist, vibrant, realistic, cute, festive, casual
             chart_type = data.get("chart_type", "other")
             style_tags = data.get("style_tags", ["realistic" if scene_type == "daily" else "academic"])
 
-            # 防御性清洗：日常场景强制移除学术标签
+            # 防御性清洗：日常场景强制移除学术/商务标签；学术场景强制移除生活化标签
             if scene_type == "daily":
-                style_tags = [t for t in style_tags if t not in ("academic", "technical")]
+                style_tags = [t for t in style_tags if t not in ("academic", "technical", "corporate")]
                 if not style_tags:
                     style_tags = ["realistic"]
             else:
-                style_tags = [t for t in style_tags if t not in ("cute", "festive", "casual")]
+                style_tags = [t for t in style_tags if t not in (
+                    "cute", "festive", "casual", "photographic", "anime",
+                    "ancient_chinese", "delicious", "playful"
+                )]
                 if not style_tags:
                     style_tags = ["academic"]
 
