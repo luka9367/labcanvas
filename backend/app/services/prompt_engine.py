@@ -1,7 +1,7 @@
 """多层 Prompt 工程架构 — 系统性提升免费图像模型输出质量.
 
 基于 CogView-3-Flash 的特性，设计 4 层渐进式提示词优化：
-1. 需求结构化分析：识别图表类型、提取关键元素、选择构图模板
+1. 需求结构化分析：识别场景类型（学术/日常）、提取关键元素、选择构图模板
 2. 核心提示词生成：构建主体描述与视觉规范
 3. 质量增强层：负面排除 + 细节强化 + CogView 技巧
 4. 参考图风格融合：提取并注入参考图的风格特征
@@ -21,12 +21,14 @@ class RequirementAnalysis:
 
     def __init__(
         self,
+        scene_type: str,
         chart_type: str,
         key_elements: List[str],
         composition_template: str,
         style_tags: List[str],
         detail_level: str,
     ) -> None:
+        self.scene_type = scene_type
         self.chart_type = chart_type
         self.key_elements = key_elements
         self.composition_template = composition_template
@@ -50,7 +52,7 @@ class PromptEngine:
     )
 
     # 学术图表构图模板库
-    COMPOSITION_TEMPLATES: Dict[str, str] = {
+    ACADEMIC_COMPOSITION_TEMPLATES: Dict[str, str] = {
         "system_architecture": (
             "system architecture diagram with clear hierarchical layers, "
             "top-down or left-right flow, modules arranged in logical groups, "
@@ -88,6 +90,39 @@ class PromptEngine:
         ),
     }
 
+    # 日常场景构图模板库
+    DAILY_COMPOSITION_TEMPLATES: Dict[str, str] = {
+        "animal": (
+            "adorable animal portrait or scene with natural pose, "
+            "soft natural lighting, shallow depth of field feel, "
+            "warm and friendly atmosphere"
+        ),
+        "festival": (
+            "festive celebration scene with seasonal decorations, "
+            "warm inviting lighting, rich colors, joyful atmosphere, "
+            "balanced composition with clear focal point"
+        ),
+        "portrait": (
+            "natural portrait with soft flattering lighting, "
+            "authentic expression, clean background, "
+            "warm skin tones and lifelike details"
+        ),
+        "campus": (
+            "scenic campus view with iconic architecture, "
+            "pleasant outdoor lighting, green landscaping, "
+            "balanced composition showing the spirit of the place"
+        ),
+        "nature": (
+            "natural landscape with clear depth, soft natural light, "
+            "vibrant but realistic colors, serene and refreshing mood"
+        ),
+        "lifestyle": (
+            "everyday life scene with natural composition, "
+            "soft ambient lighting, relatable atmosphere, "
+            "clean and pleasant visual style"
+        ),
+    }
+
     # 风格标签映射
     STYLE_ENHANCEMENTS: Dict[str, str] = {
         "academic": (
@@ -109,10 +144,48 @@ class PromptEngine:
             "3D isometric perspective, glossy material effects, "
             "dynamic composition with depth"
         ),
+        "realistic": (
+            "photorealistic style, natural lighting and shadows, "
+            "true-to-life colors, fine surface details, "
+            "authentic textures and materials"
+        ),
+        "cute": (
+            "cute and charming style, rounded soft shapes, "
+            "warm pastel colors, friendly and approachable mood, "
+            "appealing characterful details"
+        ),
+        "festive": (
+            "festive and cheerful style, rich warm colors, "
+            "decorative details, celebratory atmosphere, "
+            "inviting and joyful visual tone"
+        ),
+        "casual": (
+            "casual everyday illustration style, relaxed composition, "
+            "natural colors, approachable and down-to-earth mood"
+        ),
+    }
+
+    # 用于判断是否为学术场景的关键词
+    ACADEMIC_KEYWORDS = {
+        "图", "图表", "流程图", "架构图", "算法", "神经网络", "框架",
+        "数据", "可视化", "对比", "系统", "模块", "论文", "学术", "研究",
+        "方法", "模型", "流程", "结构", "关系", "逻辑", "分析", "统计",
+        "函数", "公式", "定理", "证明", "矩阵", "向量", "分类", "回归",
+        "clustering", "machine learning", "deep learning", "neural",
+        "architecture", "flowchart", "diagram", "framework", "algorithm",
+        "data visualization", "chart", "graph", "system", "model",
     }
 
     def __init__(self, llm_service: LLMService) -> None:
         self.llm = llm_service
+
+    def _detect_scene_type(self, user_prompt: str) -> str:
+        """启发式判断场景类型：academic 或 daily."""
+        text = user_prompt.lower()
+        for kw in self.ACADEMIC_KEYWORDS:
+            if kw.lower() in text:
+                return "academic"
+        return "daily"
 
     async def optimize(
         self,
@@ -149,6 +222,7 @@ class PromptEngine:
             "negative_prompt": self.COGVIEW_NEGATIVE_PROMPT,
             "analysis": json.dumps(
                 {
+                    "scene_type": analysis.scene_type,
                     "chart_type": analysis.chart_type,
                     "key_elements": analysis.key_elements,
                     "composition_template": analysis.composition_template,
@@ -162,29 +236,34 @@ class PromptEngine:
     async def _analyze_requirement(
         self, user_prompt: str, style_reference: Optional[str]
     ) -> RequirementAnalysis:
-        """Level 1: 需求结构化分析 — 使用 LLM 识别图表类型与关键元素."""
-        system_prompt = """你是一位专业的学术图表需求分析专家。请对用户描述进行结构化分析。
+        """Level 1: 需求结构化分析 — 使用 LLM 识别场景类型与关键元素."""
+        system_prompt = """你是一位图像需求分析专家。请对用户描述进行结构化分析。
+
+首先判断场景类型：
+- academic（学术/技术图表）: 用户需要流程图、架构图、算法图、数据可视化、神经网络图、框架图、对比图等
+- daily（日常生活场景）: 用户描述的是动物、节日、人物、校园风景、自然风光、生活日常等
 
 必须按以下JSON格式输出（直接输出JSON，不要markdown代码块）：
 {
-  "chart_type": "system_architecture|flowchart|algorithm|data_visualization|neural_network|framework|comparison|other",
+  "scene_type": "academic|daily",
+  "chart_type": "system_architecture|flowchart|algorithm|data_visualization|neural_network|framework|comparison|animal|festival|portrait|campus|nature|lifestyle|other",
   "key_elements": ["元素1", "元素2", "元素3"],
   "composition_template": "简短描述推荐的构图方式",
-  "style_tags": ["academic", "technical"],
+  "style_tags": ["标签1", "标签2"],
   "detail_level": "high|medium|low"
 }
 
 chart_type 必须从以下选择：
-- system_architecture: 系统架构图
-- flowchart: 流程图
-- algorithm: 算法/伪代码图
-- data_visualization: 数据可视化
-- neural_network: 神经网络架构
-- framework: 方法论框架
-- comparison: 对比图
-- other: 其他
+学术类：system_architecture, flowchart, algorithm, data_visualization, neural_network, framework, comparison, other
+日常类：animal, festival, portrait, campus, nature, lifestyle, other
 
-style_tags 从以下选择（可多选）：academic, technical, minimalist, vibrant"""
+style_tags 从以下选择（可多选）：
+academic, technical, minimalist, vibrant, realistic, cute, festive, casual
+
+注意：
+- 如果是 daily 场景，不要返回 academic/technical 标签
+- 如果是 academic 场景，不要返回 cute/festive/casual 标签
+- 标签数量建议 1-2 个"""
 
         user_text = f"用户描述：{user_prompt}"
         if style_reference:
@@ -201,65 +280,91 @@ style_tags 从以下选择（可多选）：academic, technical, minimalist, vib
             content = await self.llm.extract_xml_from_response(response)
             data = json.loads(content.strip())
 
+            scene_type = data.get("scene_type", self._detect_scene_type(user_prompt))
+            chart_type = data.get("chart_type", "other")
+            style_tags = data.get("style_tags", ["realistic" if scene_type == "daily" else "academic"])
+
+            # 防御性清洗：日常场景强制移除学术标签
+            if scene_type == "daily":
+                style_tags = [t for t in style_tags if t not in ("academic", "technical")]
+                if not style_tags:
+                    style_tags = ["realistic"]
+            else:
+                style_tags = [t for t in style_tags if t not in ("cute", "festive", "casual")]
+                if not style_tags:
+                    style_tags = ["academic"]
+
             return RequirementAnalysis(
-                chart_type=data.get("chart_type", "other"),
-                key_elements=data.get("key_elements", []),
+                scene_type=scene_type,
+                chart_type=chart_type,
+                key_elements=data.get("key_elements", [user_prompt[:50]]),
                 composition_template=data.get(
-                    "composition_template", "clear hierarchical layout"
+                    "composition_template", "clear balanced composition"
                 ),
-                style_tags=data.get("style_tags", ["academic"]),
-                detail_level=data.get("detail_level", "high"),
+                style_tags=style_tags,
+                detail_level=data.get("detail_level", "medium"),
             )
         except Exception as e:
             logger.warning("需求结构化分析失败: %s，使用默认分析", e)
+            scene_type = self._detect_scene_type(user_prompt)
             return RequirementAnalysis(
+                scene_type=scene_type,
                 chart_type="other",
                 key_elements=[user_prompt[:50]],
-                composition_template="clear professional layout",
-                style_tags=["academic"],
-                detail_level="high",
+                composition_template="clear balanced composition",
+                style_tags=["realistic" if scene_type == "daily" else "academic"],
+                detail_level="medium",
             )
 
     def _build_base_prompt(
         self, user_prompt: str, analysis: RequirementAnalysis
     ) -> str:
         """Level 2: 核心提示词生成."""
-        # 构图模板
-        composition = self.COMPOSITION_TEMPLATES.get(
-            analysis.chart_type,
-            f"professional {analysis.chart_type.replace('_', ' ')} diagram",
-        )
+        if analysis.scene_type == "daily":
+            composition = self.DAILY_COMPOSITION_TEMPLATES.get(
+                analysis.chart_type,
+                "natural everyday scene with balanced composition",
+            )
+        else:
+            composition = self.ACADEMIC_COMPOSITION_TEMPLATES.get(
+                analysis.chart_type,
+                f"professional {analysis.chart_type.replace('_', ' ')} diagram",
+            )
 
         # 风格增强
         style_parts: List[str] = []
         for tag in analysis.style_tags:
             if tag in self.STYLE_ENHANCEMENTS:
                 style_parts.append(self.STYLE_ENHANCEMENTS[tag])
-        style_text = " ".join(style_parts) if style_parts else self.STYLE_ENHANCEMENTS["academic"]
+        if analysis.scene_type == "daily":
+            default_style = self.STYLE_ENHANCEMENTS["realistic"]
+        else:
+            default_style = self.STYLE_ENHANCEMENTS["academic"]
+        style_text = " ".join(style_parts) if style_parts else default_style
 
         # 关键元素描述
-        elements_text = ", ".join(analysis.key_elements) if analysis.key_elements else "detailed technical components"
+        elements_text = ", ".join(analysis.key_elements) if analysis.key_elements else user_prompt
 
         # 细节等级
         detail_map = {
             "high": (
-                "extremely detailed, fine-grained textures, precise annotations, "
-                "every label clearly readable, rich visual information"
+                "rich details, fine textures, crisp edges, "
+                "vivid yet natural colors, high visual fidelity"
             ),
             "medium": (
-                "well-detailed, clear annotations, readable labels, "
-                "balanced information density"
+                "clear details, balanced textures, natural colors, "
+                "pleasant visual quality"
             ),
             "low": (
-                "clean and simple, essential annotations only, "
-                "minimalist visual elements"
+                "clean and simple, soft details, minimal clutter, "
+                "gentle colors"
             ),
         }
-        detail_text = detail_map.get(analysis.detail_level, detail_map["high"])
+        detail_text = detail_map.get(analysis.detail_level, detail_map["medium"])
 
         base = (
             f"A high-quality {composition}. "
-            f"The illustration shows: {elements_text}. "
+            f"The image depicts: {elements_text}. "
             f"{style_text}. "
             f"{detail_text}. "
             f"The original subject matter is: {user_prompt}."
@@ -269,18 +374,17 @@ style_tags 从以下选择（可多选）：academic, technical, minimalist, vib
     def _apply_quality_boost(
         self, base_prompt: str, analysis: RequirementAnalysis
     ) -> str:
-        """Level 3: 质量增强层 — CogView-3 专属技巧 + 细节强化."""
-        # CogView-3 优化后缀（经测试可显著提升输出质量）
+        """Level 3: 质量增强层 — CogView-3 专属技巧 + 场景化细节强化."""
+        # CogView-3 优化后缀
         cogview_boost = (
-            "Rendered in 4K resolution concept art style. "
-            "Crisp vector-like edges, anti-aliased lines, "
-            "subtle drop shadows for depth, "
-            "consistent 2px stroke width on all borders, "
-            "professionally color-graded with high contrast, "
-            "no photographic noise, pure digital illustration."
+            "Rendered in high resolution concept art style. "
+            "Crisp edges, anti-aliased lines, "
+            "subtle depth and dimension, "
+            "professionally color-graded with natural contrast, "
+            "clean digital illustration."
         )
 
-        # 针对学术图表的额外强化
+        # 学术场景额外强化
         academic_boost = (
             "All text elements use clean sans-serif typography, "
             "mathematical symbols rendered in proper LaTeX style, "
@@ -288,6 +392,15 @@ style_tags 从以下选择（可多选）：academic, technical, minimalist, vib
             "arrows have consistent arrowheads and orthogonal routing, "
             "modules use rounded rectangles with subtle fill gradients, "
             "background is clean white or very light gray (#f8f9fa)."
+        )
+
+        # 日常场景额外强化
+        daily_boost = (
+            "Natural and lifelike appearance, "
+            "avoid artificial or overly staged look, "
+            "soft and harmonious color palette, "
+            "no harsh artificial filters, "
+            "maintain a warm and approachable mood."
         )
 
         # 构图强化
@@ -298,12 +411,20 @@ style_tags 从以下选择（可多选）：academic, technical, minimalist, vib
             "adequate margins and gutters between components."
         )
 
-        enhanced = (
-            f"{base_prompt}\n\n"
-            f"Quality specifications: {cogview_boost}\n\n"
-            f"Academic figure standards: {academic_boost}\n\n"
-            f"Layout requirements: {composition_boost}"
-        )
+        if analysis.scene_type == "daily":
+            enhanced = (
+                f"{base_prompt}\n\n"
+                f"Quality specifications: {cogview_boost}\n\n"
+                f"Natural look requirements: {daily_boost}\n\n"
+                f"Layout requirements: {composition_boost}"
+            )
+        else:
+            enhanced = (
+                f"{base_prompt}\n\n"
+                f"Quality specifications: {cogview_boost}\n\n"
+                f"Academic figure standards: {academic_boost}\n\n"
+                f"Layout requirements: {composition_boost}"
+            )
         return enhanced
 
     def _apply_style_anchor(
