@@ -204,6 +204,7 @@ export default function EditorPage() {
 
     let currentSteps = steps
     let finalData: any = null
+    let hasError = false
 
     try {
       const response = await generateApi.generateStream(
@@ -258,6 +259,7 @@ export default function EditorPage() {
             currentSteps = updateStepStatus(currentSteps, String(stepId), 'complete', message)
             setGenerationSteps([...currentSteps])
           } else if (data.status === 'error' || data.step === 'error') {
+            hasError = true
             currentSteps = updateStepStatus(currentSteps, String(stepId), 'error', message || '处理出错')
             setGenerationSteps([...currentSteps])
           } else {
@@ -276,11 +278,16 @@ export default function EditorPage() {
         }
       })
 
-      // Mark all pending/running steps as complete
-      currentSteps = currentSteps.map((s) =>
-        s.status === 'pending' || s.status === 'running' ? { ...s, status: 'complete' as const } : s
-      )
-      setGenerationSteps([...currentSteps])
+      if (hasError) {
+        setGenerationProgress(currentSteps.find((s) => s.status === 'error')?.message || '生成失败')
+      } else {
+        // Mark all pending/running steps as complete
+        currentSteps = currentSteps.map((s) =>
+          s.status === 'pending' || s.status === 'running' ? { ...s, status: 'complete' as const } : s
+        )
+        setGenerationSteps([...currentSteps])
+        setGenerationProgress('生成完成！')
+      }
 
       if (finalData?.xml) {
         setGeneratedXml(finalData.xml)
@@ -295,8 +302,6 @@ export default function EditorPage() {
       if (finalData?.data?.image_url) {
         setGeneratedImage(finalData.data.image_url)
       }
-
-      setGenerationProgress('生成完成！')
     } catch (error) {
       if ((error as Error).name === 'AbortError') {
         setGenerationProgress('生成已取消')
