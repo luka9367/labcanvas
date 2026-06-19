@@ -14,6 +14,7 @@ from typing import AsyncGenerator, Optional, List, Dict, Any
 import httpx
 
 from app.core.config import LLM_MAX_RETRIES
+from app.services.price_checker import check_model_free
 from app.services.settings_service import load_settings
 
 logger = logging.getLogger(__name__)
@@ -206,11 +207,16 @@ class LLMService:
         
         Compatible with OpenAI API format for Zhipu AI.
         """
+        model_to_use = model or self.model
+        is_free, reason = await check_model_free(model_to_use)
+        if not is_free:
+            raise ValueError(reason)
+
         url = f"{self.base_url}/chat/completions"
         headers = await self._auth_headers("text")
         
         body: Dict[str, Any] = {
-            "model": model or self.model,
+            "model": model_to_use,
             "messages": messages,
             "temperature": temperature,
             "stream": stream,
@@ -267,11 +273,16 @@ class LLMService:
         Uses Zhipu AI's CogView-3-Flash (free tier available).
         Supports negative_prompt for quality control.
         """
+        model_to_use = model or self.image_model
+        is_free, reason = await check_model_free(model_to_use)
+        if not is_free:
+            raise ValueError(reason)
+
         url = f"{self.base_url}/images/generations"
         headers = await self._auth_headers("image")
 
         body: Dict[str, Any] = {
-            "model": model or self.image_model,
+            "model": model_to_use,
             "prompt": prompt,
             "size": size,
             "quality": quality,
